@@ -8,12 +8,12 @@
   "theme_color": "#FF0000",
   "icons": [
     {
-      "src": "192.png",
+      "src": "Beep Test icon.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "512.png",
+      "src": "Beep Test icon.png",
       "sizes": "512x512",
       "type": "image/png"
     }
