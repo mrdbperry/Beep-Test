@@ -3,8 +3,8 @@ const ASSETS = [
   './',
   './index.html',
   './manifest.json',
-  './192.png',
-  './512.png'
+  './Beep Test icon.png',
+  './Beep Test icon.png'
 ];
 
 // If you have a specific music file, add it to the ASSETS array above!
