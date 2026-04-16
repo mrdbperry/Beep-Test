@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BEEP TEST TIMER - ABC ENTERPRISES</title>
+    <style>
+        body, html {
+            height: 100%; margin: 0; font-family: 'Arial', sans-serif;
+            background-color: #7BAFD4; display: flex; flex-direction: column;
+            color: white; overflow: hidden;
+        }
+
+        .header { height: 20%; display: flex; justify-content: center; align-items: center; position: relative; }
+        .title-box { background: white; color: #FF0000; padding: 10px 30px; border: 5px solid #000; border-radius: 25px; font-weight: bold; font-size: 1.5rem; text-transform: uppercase; z-index: 5; }
+        
+        /* Enlarged Record Area */
+        .best-score-badge {
+            position: absolute; right: 30px; background: rgba(0,0,0,0.4);
+            padding: 15px 25px; border-radius: 20px; 
+            display: flex; flex-direction: column; align-items: center; gap: 8px; 
+            border: 2px solid rgba(255,255,255,0.3);
+            min-width: 140px; /* Ensuring substantial width */
+        }
+        
+        .record-header { font-weight: bold; letter-spacing: 2px; color: #D4AF37; font-size: 1.2rem; }
+
+        .selector-row { display: flex; align-items: center; gap: 10px; }
+
+        #trophy-icon { font-size: 1.8rem; }
+
+        .record-select {
+            background: #000080; color: white; border: 2px solid white;
+            border-radius: 8px; font-size: 1.3rem; padding: 5px 10px; cursor: pointer;
+            font-family: 'Courier New', monospace; font-weight: bold;
+        }
+
+        .reset-btn {
+            background: rgba(255,255,255,0.2); border: none; color: white;
+            border-radius: 50%; width: 24px; height: 24px; font-size: 12px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
+
+        .main-display { height: 60%; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; }
+        .svg-container { position: relative; width: 340px; height: 340px; display: flex; justify-content: center; align-items: center; }
+
+        .ring { fill: none; transform: rotate(-90deg); transform-origin: center; transition: stroke-dashoffset 0.1s linear; }
+        .bg-ring { fill: none; stroke: rgba(255, 255, 255, 0.15); }
+
+        #level-ring { stroke: #000080; stroke-width: 20; stroke-dasharray: 879.6; stroke-dashoffset: 0; }
+        #shuttle-ring { stroke: #00FF00; stroke-width: 20; stroke-dasharray: 754; stroke-dashoffset: 0; }
+
+        .center-text {
+            position: absolute; width: 180px; height: 180px; border-radius: 50%;
+            background: white; display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            color: #00FF00; font-size: 3.5rem; font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        #prep-overlay {
+            position: absolute; font-size: 9rem; color: #FF0000; font-weight: bold;
+            z-index: 10; display: none; text-shadow: 0 0 30px rgba(255,255,255,0.8);
+        }
+
+        .tiny-label { font-size: 0.7rem; text-transform: uppercase; font-weight: bold; color: #000; margin-top: -5px; }
+
+        .stats { display: flex; gap: 60px; margin-top: 25px; color: #000; }
+        .stat-box { text-align: center; }
+        .stat-box b { font-size: 2.8rem; display: block; line-height: 1; }
+        
+        .controls { height: 20%; display: flex; justify-content: center; align-items: center; gap: 20px; }
+        .btn { padding: 15px 45px; border-radius: 50px; border: none; font-weight: bold; font-size: 1.2rem; cursor: pointer; transition: 0.2s; }
+        .start-btn { background: #FF0000; color: white; }
+        .finish-btn { background: #000; color: white; }
+
+        #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        .score-card { background: white; color: #000; padding: 40px; border-radius: 30px; border: 8px solid #FF0000; }
+    </style>
+</head>
+<body>
+
+    <div id="overlay">
+        <div class="score-card">
+            <h2 style="margin:0;">TEST COMPLETE</h2>
+            <div id="new-record-banner" style="color: #D4AF37; font-weight: bold; margin-top: 10px; display: none; font-size: 1.5rem;">🏆 NEW PERSONAL BEST! 🏆</div>
+            <div style="font-size: 6rem; color: #FF0000; font-weight: bold;" id="final-display">0:0</div>
+            <button class="btn start-btn" onclick="location.reload()">RESTART</button>
+        </div>
+    </div>
+
+    <div class="header">
+        <div class="title-box">Beep Test Active</div>
+        <div class="best-score-badge">
+            <div class="record-header">SR GIRLS RECORD</div>
+            <div class="selector-row">
+                <span id="trophy-icon" style="filter: grayscale(1); opacity: 0.5;">🏆</span>
+                <select id="manual-record" class="record-select" onchange="setManualRecord()">
+                    <option value="0:0">SET</option>
+                </select>
+                <button class="reset-btn" onclick="resetHistory()">✕</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-display">
+        <div id="prep-overlay">5</div>
+        <div class="svg-container">
+            <svg width="340" height="340">
+                <circle class="bg-ring" cx="170" cy="170" r="140" stroke-width="20" />
+                <circle class="bg-ring" cx="170" cy="170" r="120" stroke-width="20" />
+                <circle id="level-ring" class="ring" cx="170" cy="170" r="140" />
+                <circle id="shuttle-ring" class="ring" cx="170" cy="170" r="120" />
+            </svg>
+            <div class="center-text">
+                <div id="s-clock">9.0</div>
+                <span class="tiny-label">Shuttle</span>
+            </div>
+        </div>
+        <div class="stats">
+            <div class="stat-box"><b id="level-txt">1</b><span>LEVEL</span></div>
+            <div class="stat-box"><b id="shuttle-txt">1</b><span>SHUTTLE</span></div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button id="startBtn" class="btn start-btn" onclick="handleStart()">START TEST</button>
+        <button class="btn finish-btn" onclick="finishTest()">FINISH TEST</button>
+    </div>
+
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playBeep(freq = 440, duration = 0.5) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.frequency.value = freq; osc.start();
+            gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration);
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        let level = 1, shuttle = 1, running = false;
+        let lSecs = 60, sSecs = 9.0;
+        let sTimer, lTimer;
+        const L_CIRC = 879.6; const S_CIRC = 754;
+
+        const dropdown = document.getElementById('manual-record');
+        for(let l=1; l<=21; l++) {
+            for(let s=1; s<=16; s++) {
+                let opt = document.createElement('option');
+                opt.value = `${l}:${s}`;
+                opt.innerHTML = `${l}:${s}`;
+                dropdown.appendChild(opt);
+            }
+        }
+
+        let bestL = localStorage.getItem('beepLevel') || 0;
+        let bestS = localStorage.getItem('beepShuttle') || 0;
+        initRecordDisplay();
+
+        function initRecordDisplay() {
+            if (bestL > 0) {
+                dropdown.value = `${bestL}:${bestS}`;
+                document.getElementById('trophy-icon').style.filter = "none";
+                document.getElementById('trophy-icon').style.opacity = "1";
+            }
+        }
+
+        function setManualRecord() {
+            const val = dropdown.value.split(':');
+            bestL = parseInt(val[0]);
+            bestS = parseInt(val[1]);
+            localStorage.setItem('beepLevel', bestL);
+            localStorage.setItem('beepShuttle', bestS);
+            initRecordDisplay();
+        }
+
+        function resetHistory() {
+            if (confirm("Reset Record?")) {
+                localStorage.clear();
+                bestL = 0; bestS = 0;
+                dropdown.value = "0:0";
+                document.getElementById('trophy-icon').style.filter = "grayscale(1)";
+                document.getElementById('trophy-icon').style.opacity = "0.5";
+            }
+        }
+
+        function speak(text, rate = 1.4) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = rate; window.speechSynthesis.speak(utterance);
+        }
+
+        function handleStart() {
+            if (running) return;
+            document.getElementById('startBtn').style.visibility = 'hidden';
+            let prepTime = 5;
+            const prepOverlay = document.getElementById('prep-overlay');
+            prepOverlay.style.display = 'block';
+            const prepInterval = setInterval(() => {
+                if (prepTime > 0) {
+                    prepOverlay.innerText = prepTime;
+                    speak(prepTime.toString(), 1.6);
+                    playBeep(300, 0.1); prepTime--;
+                } else {
+                    clearInterval(prepInterval);
+                    prepOverlay.style.display = 'none';
+                    beginTest();
+                }
+            }, 1000);
+        }
+
+        function beginTest() {
+            running = true;
+            lTimer = setInterval(() => {
+                if (lSecs > 0) {
+                    lSecs -= 0.1;
+                    document.getElementById('level-ring').style.strokeDashoffset = L_CIRC - (lSecs / 60) * L_CIRC;
+                } else {
+                    lSecs = 60; level++;
+                    document.getElementById('level-txt').innerText = level;
+                    playBeep(880, 0.8);
+                    sSecs = Math.max(3.8, sSecs - 0.4); 
+                }
+            }, 100);
+            runShuttle();
+        }
+
+        function runShuttle() {
+            let timeLeft = sSecs;
+            const sClock = document.getElementById('s-clock');
+            playBeep(440, 0.4); 
+            speak(`${level} ${shuttle}`);
+            sTimer = setInterval(() => {
+                timeLeft -= 0.1;
+                sClock.innerText = Math.max(0, timeLeft).toFixed(1);
+                document.getElementById('shuttle-ring').style.strokeDashoffset = S_CIRC - (timeLeft / sSecs) * S_CIRC;
+                if (timeLeft <= 0) {
+                    clearInterval(sTimer); shuttle++;
+                    document.getElementById('shuttle-txt').innerText = shuttle;
+                    runShuttle();
+                }
+            }, 100);
+        }
+
+        function finishTest() {
+            running = false;
+            clearInterval(sTimer); clearInterval(lTimer);
+            window.speechSynthesis.cancel();
+            
+            let isNewBest = false;
+            if (level > bestL || (level == bestL && shuttle > bestS)) {
+                localStorage.setItem('beepLevel', level);
+                localStorage.setItem('beepShuttle', shuttle);
+                isNewBest = true;
+                bestL = level; bestS = shuttle;
+                initRecordDisplay();
+            }
+
+            document.getElementById('final-display').innerText = `${level}:${shuttle}`;
+            if (isNewBest) document.getElementById('new-record-banner').style.display = 'block';
+            document.getElementById('overlay').style.display = 'flex';
+        }
+    </script>
+</body>
+</html>

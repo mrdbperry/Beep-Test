@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MPJ BEEP TEST - ABC ENTERPRISES</title>
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            background-color: #7BAFD4; /* Tar Heel Blue */
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* 25, 35, 15, 15, 10 Ratio */
+        .section-title  { height: 25%; display: flex; justify-content: center; align-items: center; }
+        .section-logo   { height: 35%; display: flex; justify-content: center; align-items: center; }
+        .section-runner { height: 15%; position: relative; width: 50%; margin: 0 auto; overflow: hidden; border-bottom: 2px solid rgba(255,255,255,0.3); }
+        .section-button { height: 15%; display: flex; justify-content: center; align-items: center; }
+        .section-footer { height: 10%; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; font-size: 0.85rem; }
+
+        h1 {
+            color: #FF0000;
+            font-weight: bold;
+            font-size: clamp(1.2rem, 7vw, 3rem);
+            padding: 10px 25px;
+            border: 5px solid #000000;
+            border-radius: 25px;
+            text-transform: uppercase;
+        }
+
+        .logo { max-height: 90%; width: auto; }
+
+        /* Runner Animation: 10s Round Trip */
+        .runner-icon {
+            font-size: 3.5rem;
+            position: absolute;
+            bottom: 5px;
+            width: 60px;
+            text-align: center;
+            animation: shuttle 10s linear infinite;
+        }
+
+        @keyframes shuttle {
+            0% { left: 0%; transform: scaleX(-1); } 
+            49.9% { left: calc(100% - 60px); transform: scaleX(-1); }
+            50% { left: calc(100% - 60px); transform: scaleX(1); } 
+            99.9% { left: 0%; transform: scaleX(1); }
+            100% { left: 0%; transform: scaleX(-1); }
+        }
+
+        .next-btn {
+            padding: 12px 60px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #7BAFD4;
+            background-color: white;
+            border: none;
+            border-radius: 50px;
+            text-decoration: none;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body onclick="startBeepSequence()">
+
+    <div class="section-title">
+        <h1>MPJ BEEP TEST</h1>
+    </div>
+
+    <div class="section-logo">
+        <img src="Jag logo.png" alt="Logo" class="logo">
+    </div>
+
+    <div class="section-runner">
+        <div class="runner-icon">🏃</div>
+    </div>
+
+    <div class="section-button">
+        <a href="categories.html" class="next-btn">NEXT</a>
+    </div>
+
+    <div class="section-footer">
+        <strong>Created by ABC ENTERPRISES</strong>
+        <div id="current-date"></div>
+    </div>
+
+    <script>
+        // Set Date
+        const options = { month: 'long', day: 'numeric', year: 'numeric' };
+        document.getElementById('current-date').innerText = new Date().toLocaleDateString("en-US", options);
+
+        // Audio Logic
+        let sequenceStarted = false;
+        // Using a standard, reliable short beep sound
+        const beep = new Audio('https://www.soundjay.com/buttons/button-35.mp3');
+
+        function startBeepSequence() {
+            if (!sequenceStarted) {
+                sequenceStarted = true;
+                
+                // Play first beep immediately on click
+                playBeep();
+                
+                // Beep exactly every 5 seconds to match the runner's turn
+                setInterval(playBeep, 5000);
+            }
+        }
+
+        function playBeep() {
+            beep.currentTime = 0; // Reset to start in case of overlap
+            beep.play().catch(e => console.log("Audio play blocked. Click the page again."));
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+{
+  "name": "Pro Beep Test Timer",
+  "short_name": "BeepTest",
+  "description": "Professional Beep Test Timer with Category Records",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#7BAFD4",
+  "theme_color": "#FF0000",
+  "icons": [
+    {
+      "src": "192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

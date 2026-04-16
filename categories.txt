@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BEEP TEST TIMER - OFFICIAL STANDARD</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#FF0000">
+    <link rel="apple-touch-icon" href="192.png">
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js').catch(err => console.log(err));
+        });
+      }
+    </script>
+
+    <style>
+        body, html {
+            height: 100%; margin: 0; font-family: 'Arial', sans-serif;
+            background-color: #7BAFD4; color: white; overflow: hidden;
+        }
+
+        .view { display: none; height: 100vh; width: 100vw; flex-direction: column; align-items: center; justify-content: center; }
+        .active { display: flex; }
+
+        /* --- CATEGORY PAGE --- */
+        .reset-all-container { margin-bottom: 20px; width: 100%; text-align: center; }
+        .reset-all-btn {
+            background: rgba(255, 0, 0, 0.1); border: 2px solid #FF0000; color: white;
+            padding: 8px 20px; border-radius: 10px; cursor: pointer; font-weight: bold;
+            transition: 0.3s; text-transform: uppercase; font-size: 0.8rem;
+        }
+        .category-grid {
+            display: grid; grid-template-columns: repeat(2, 220px) 220px;
+            grid-template-rows: repeat(2, 220px); gap: 25px; align-items: center;
+        }
+        .cat-square {
+            width: 220px; height: 220px; background: white; color: #FF0000;
+            border: 5px solid #000; border-radius: 25px; display: flex;
+            flex-direction: column; justify-content: center; align-items: center;
+            text-align: center; font-weight: bold; cursor: pointer; transition: 0.2s;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2); padding: 10px; box-sizing: border-box;
+        }
+        .cat-square span { font-size: 1.3rem; margin-top: 10px; text-transform: uppercase; }
+        .cat-square small { font-size: 0.85rem; font-weight: bold; color: #333; display: block; margin-top: 5px; background: #eee; padding: 2px 10px; border-radius: 10px;}
+        .icon { font-size: 3.5rem; }
+        .fifth-square { grid-column: 3; grid-row: 1 / span 2; background: #000080; color: white; border-color: #FF0000; }
+
+        /* --- TIMER PAGE --- */
+        .header { height: 15%; width: 100%; display: flex; justify-content: center; align-items: center; position: relative; }
+        .title-box { background: white; color: #FF0000; padding: 10px 30px; border: 5px solid #000; border-radius: 25px; font-weight: bold; font-size: 1.5rem; text-transform: uppercase; }
+        
+        .header-stats-column {
+            position: absolute; right: 30px; top: 10px; display: flex; flex-direction: column; gap: 8px; align-items: center;
+        }
+
+        .best-score-badge {
+            background: rgba(0,0,0,0.4); padding: 10px 20px; border-radius: 15px;
+            display: flex; flex-direction: column; align-items: center; gap: 4px; border: 2px solid rgba(255,255,255,0.3); min-width: 140px;
+        }
+        
+        .performance-box {
+            background: rgba(0,0,0,0.6); padding: 10px 15px; border-radius: 15px;
+            display: flex; flex-direction: column; align-items: center; border: 2px solid #D4AF37; min-width: 140px;
+        }
+
+        .perf-label { font-size: 0.65rem; color: #FFF; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px; }
+        .perf-value { font-size: 1.2rem; font-weight: bold; font-family: 'Courier New', monospace; color: #D4AF37; }
+        .divider { width: 80%; height: 1px; background: rgba(212, 175, 55, 0.3); margin: 5px 0; }
+
+        .record-select { background: #000080; color: white; border: 2px solid white; border-radius: 8px; font-size: 1.1rem; padding: 3px; font-weight: bold; }
+
+        .main-display { height: 55%; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; }
+        .svg-container { position: relative; width: 320px; height: 320px; display: flex; justify-content: center; align-items: center; }
+        .ring { fill: none; transform: rotate(-90deg); transform-origin: center; transition: stroke-dashoffset 0.1s linear; }
+        #level-ring { stroke: #000080; stroke-width: 20; stroke-dasharray: 879.6; }
+        #shuttle-ring { stroke: #00FF00; stroke-width: 20; stroke-dasharray: 754; }
+
+        .center-text {
+            position: absolute; width: 180px; height: 180px; border-radius: 50%;
+            background: white; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; color: #00FF00; font-size: 3.5rem; font-weight: bold;
+            z-index: 5;
+        }
+
+        @keyframes countdownPulse {
+            0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            50% { transform: translate(-50%, -50%) scale(1.15); opacity: 0.8; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+
+        #prep-overlay { 
+            position: absolute; font-size: 11.25rem; color: #FF0000; font-weight: bold; 
+            z-index: 10; display: none; text-shadow: 0 0 25px rgba(255,255,255,0.9);
+            top: 50%; left: 50%; transform: translate(-50%, -50%);
+            animation: countdownPulse 1s ease-in-out infinite;
+        }
+
+        .stats { display: flex; gap: 60px; margin-top: 15px; color: #000; }
+        .stat-box { text-align: center; }
+        .stat-box b { font-size: 2.8rem; display: block; line-height: 1; }
+        
+        .controls { height: 15%; display: flex; gap: 20px; align-items: center;}
+        .btn { padding: 12px 45px; border-radius: 50px; border: none; font-weight: bold; font-size: 1.1rem; cursor: pointer; }
+        .start-btn { background: #FF0000; color: white; }
+        .finish-btn { background: #000; color: white; }
+
+        .volume-container { height: 8%; width: 100%; display: flex; justify-content: center; align-items: center; gap: 15px; background: rgba(0,0,0,0.2); font-size: 0.9rem; }
+        .volume-slider { width: 200px; cursor: pointer; accent-color: #FF0000; }
+
+        #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100; flex-direction: column; justify-content: center; align-items: center; }
+        .score-card { background: white; color: #000; padding: 40px; border-radius: 30px; border: 8px solid #FF0000; text-align: center;}
+    </style>
+</head>
+<body onload="initRecords()">
+
+    <audio id="bg-music" loop>
+        <source src="Yall Ready for This.mp3" type="audio/mpeg">
+    </audio>
+
+    <div id="category-view" class="view active">
+        <div class="reset-all-container">
+            <button class="reset-all-btn" onclick="resetAllRecords()">Reset All Records</button>
+        </div>
+        <h1 style="margin-bottom: 20px; text-shadow: 2px 2px #000; text-transform: uppercase;">Select Category</h1>
+        <div class="category-grid">
+            <div class="cat-square" onclick="selectCat('JNR_GIRLS')"><div class="icon">👟</div><span>Junior Girls</span><small id="pb-JNR_GIRLS">PB: 1:1</small></div>
+            <div class="cat-square" onclick="selectCat('JNR_BOYS')"><div class="icon">👟</div><span>Junior Boys</span><small id="pb-JNR_BOYS">PB: 1:1</small></div>
+            <div class="cat-square" onclick="selectCat('SNR_GIRLS')"><div class="icon" style="color:#D4AF37">🥇</div><span>Senior Girls</span><small id="pb-SNR_GIRLS">PB: 1:1</small></div>
+            <div class="cat-square" onclick="selectCat('SNR_BOYS')"><div class="icon" style="color:#D4AF37">🥇</div><span>Senior Boys</span><small id="pb-SNR_BOYS">PB: 1:1</small></div>
+            <div class="cat-square fifth-square" onclick="selectCat('OPEN_AGES')"><div class="icon" style="color:#FFD700">⭐</div><span>Open Ages</span><small id="pb-OPEN_AGES">PB: 1:1</small></div>
+        </div>
+    </div>
+
+    <div id="timer-view" class="view">
+        <div class="header">
+            <div class="title-box" id="active-cat-title">Beep Test</div>
+            
+            <div class="header-stats-column">
+                <div class="best-score-badge">
+                    <div style="font-weight:bold; color:#D4AF37; font-size: 0.8rem;">RECORD</div>
+                    <select id="manual-record" class="record-select" onchange="setManualRecord()"></select>
+                </div>
+                <div class="performance-box">
+                    <div class="perf-label">Total Time</div>
+                    <div id="elapsed-clock" class="perf-value">00:00</div>
+                    <div class="divider"></div>
+                    <div class="perf-label">Distance</div>
+                    <div id="distance-txt" class="perf-value">0.00 km</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-display">
+            <div class="svg-container">
+                <div id="prep-overlay">5</div>
+                <svg width="320" height="320">
+                    <circle cx="160" cy="160" r="140" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="20" />
+                    <circle id="level-ring" class="ring" cx="160" cy="160" r="140" stroke-width="20" />
+                    <circle id="shuttle-ring" class="ring" cx="160" cy="160" r="120" stroke-width="20" />
+                </svg>
+                <div class="center-text">
+                    <div id="s-clock">0.0</div>
+                    <span style="font-size:0.7rem; color:#000;">SHUTTLE</span>
+                </div>
+            </div>
+            <div class="stats">
+                <div class="stat-box"><b id="level-txt">1</b><span>LEVEL</span></div>
+                <div class="stat-box"><b id="shuttle-txt">1</b><span>SHUTTLE</span></div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="startBtn" class="btn start-btn" onclick="handleStart()">START TEST</button>
+            <button class="btn finish-btn" onclick="finishTest()">FINISH</button>
+        </div>
+
+        <div class="volume-container">
+            <span>🎵 MUSIC</span>
+            <input type="range" class="volume-slider" id="volSlider" min="0" max="1" step="0.1" value="0.5" oninput="updateVolume()">
+        </div>
+    </div>
+
+    <div id="overlay">
+        <div class="score-card">
+            <h2>TEST COMPLETE</h2>
+            <div id="new-record-banner" style="color: #D4AF37; font-weight: bold; display: none; font-size: 1.5rem;">🏆 NEW PB! 🏆</div>
+            <div style="font-size: 6rem; color: #FF0000; font-weight: bold;" id="final-display">0:0</div>
+            <button class="btn start-btn" onclick="location.reload()">BACK TO MENU</button>
+        </div>
+    </div>
+
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let level = 1, shuttle = 1, currentCat = "", levelIndex = 0;
+        let sSecs = 9.0, sTimer, globalTimer;
+        let totalElapsedSeconds = 0;
+        let totalShuttlesCompleted = 0;
+        const music = document.getElementById('bg-music');
+
+        const BEEP_DATA = [
+            { level: 1, shuttles: 7, speed: 8.0 }, { level: 2, shuttles: 8, speed: 9.0 },
+            { level: 3, shuttles: 8, speed: 9.5 }, { level: 4, shuttles: 9, speed: 10.0 },
+            { level: 5, shuttles: 9, speed: 10.5 }, { level: 6, shuttles: 10, speed: 11.0 },
+            { level: 7, shuttles: 10, speed: 11.5 }, { level: 8, shuttles: 11, speed: 12.0 },
+            { level: 9, shuttles: 11, speed: 12.5 }, { level: 10, shuttles: 11, speed: 13.0 },
+            { level: 11, shuttles: 12, speed: 13.5 }, { level: 12, shuttles: 12, speed: 14.0 },
+            { level: 13, shuttles: 13, speed: 14.5 }, { level: 14, shuttles: 13, speed: 15.0 },
+            { level: 15, shuttles: 13, speed: 15.5 }, { level: 16, shuttles: 14, speed: 16.0 },
+            { level: 17, shuttles: 14, speed: 16.5 }, { level: 18, shuttles: 15, speed: 17.0 },
+            { level: 19, shuttles: 15, speed: 17.5 }, { level: 20, shuttles: 16, speed: 18.0 },
+            { level: 21, shuttles: 16, speed: 18.5 }
+        ];
+
+        function updateVolume() { music.volume = document.getElementById('volSlider').value; }
+
+        function initRecords() {
+            ['JNR_GIRLS', 'JNR_BOYS', 'SNR_GIRLS', 'SNR_BOYS', 'OPEN_AGES'].forEach(cat => {
+                const stored = localStorage.getItem('beep_record_' + cat) || "1:1";
+                const pbEl = document.getElementById('pb-' + cat);
+                if(pbEl) pbEl.innerText = 'PB: ' + stored;
+            });
+            updateVolume();
+        }
+
+        const dropdown = document.getElementById('manual-record');
+        for(let l=1; l<=21; l++) {
+            const shuts = BEEP_DATA[l-1].shuttles;
+            for(let s=1; s<=shuts; s++) {
+                let opt = document.createElement('option'); 
+                opt.value = `${l}:${s}`; opt.innerHTML = `${l}:${s}`; 
+                dropdown.appendChild(opt);
+            }
+        }
+
+        function selectCat(catId) {
+            currentCat = catId;
+            dropdown.value = localStorage.getItem('beep_record_' + currentCat) || "1:1";
+            document.getElementById('active-cat-title').innerText = catId.replace('_', ' ');
+            document.getElementById('category-view').classList.remove('active');
+            document.getElementById('timer-view').classList.add('active');
+        }
+
+        function setManualRecord() {
+            localStorage.setItem('beep_record_' + currentCat, dropdown.value);
+            initRecords();
+        }
+
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60);
+            const s = Math.floor(seconds % 60);
+            return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+
+        function playBeep(freq = 440, duration = 0.5) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(1.5, audioCtx.currentTime); // High-gain boost
+            gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration);
+            osc.start(); osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function speak(text) {
+            const utt = new SpeechSynthesisUtterance(text);
+            utt.volume = 1.0; utt.rate = 1.7; utt.pitch = 1.2;
+            window.speechSynthesis.speak(utt);
+        }
+
+        function handleStart() {
+            document.getElementById('startBtn').style.visibility = 'hidden';
+            music.play().catch(e => console.log("Music play blocked"));
+            let prep = 5;
+            const overlay = document.getElementById('prep-overlay');
+            overlay.style.display = 'block';
+            const int = setInterval(() => {
+                if(prep > 0) { 
+                    overlay.innerText = prep; playBeep(300, 0.1); speak(prep); prep--; 
+                } else { 
+                    clearInterval(int); overlay.style.display = 'none'; startTest(); 
+                }
+            }, 1000);
+        }
+
+        function startTest() {
+            levelIndex = 0; level = BEEP_DATA[levelIndex].level; shuttle = 1;
+            totalElapsedSeconds = 0;
+            totalShuttlesCompleted = 0;
+            globalTimer = setInterval(() => {
+                totalElapsedSeconds++;
+                document.getElementById('elapsed-clock').innerText = formatTime(totalElapsedSeconds);
+            }, 1000);
+            updateUI(); runShuttle();
+        }
+
+        function runShuttle() {
+            const data = BEEP_DATA[levelIndex];
+            sSecs = 20 / (data.speed / 3.6);
+            let timeLeft = sSecs;
+            playBeep(440, 0.4); speak(`${level} ${shuttle}`);
+            
+            sTimer = setInterval(() => {
+                timeLeft -= 0.1;
+                document.getElementById('s-clock').innerText = Math.max(0, timeLeft).toFixed(1);
+                document.getElementById('shuttle-ring').style.strokeDashoffset = 754 - (timeLeft/sSecs)*754;
+                if(timeLeft <= 0) {
+                    clearInterval(sTimer);
+                    totalShuttlesCompleted++;
+                    if(shuttle < data.shuttles) {
+                        shuttle++; runShuttle();
+                    } else {
+                        levelIndex++;
+                        if(levelIndex < BEEP_DATA.length) {
+                            level = BEEP_DATA[levelIndex].level; shuttle = 1;
+                            playBeep(880, 0.8); runShuttle();
+                        } else { finishTest(); }
+                    }
+                    updateUI();
+                }
+            }, 100);
+        }
+
+        function updateUI() {
+            document.getElementById('level-txt').innerText = level;
+            document.getElementById('shuttle-txt').innerText = shuttle;
+            document.getElementById('level-ring').style.strokeDashoffset = 879.6 - (level/21)*879.6;
+            
+            const distanceKm = (totalShuttlesCompleted * 20) / 1000;
+            document.getElementById('distance-txt').innerText = distanceKm.toFixed(2) + " km";
+        }
+
+        function finishTest() {
+            music.pause(); music.currentTime = 0;
+            clearInterval(sTimer); clearInterval(globalTimer);
+            window.speechSynthesis.cancel();
+            const [bestL, bestS] = (localStorage.getItem('beep_record_' + currentCat) || "1:1").split(':').map(Number);
+            if (level > bestL || (level == bestL && shuttle > bestS)) {
+                localStorage.setItem('beep_record_' + currentCat, `${level}:${shuttle}`);
+                document.getElementById('new-record-banner').style.display = 'block';
+            }
+            document.getElementById('final-display').innerText = `${level}:${shuttle}`;
+            document.getElementById('overlay').style.display = 'flex';
+        }
+
+        function resetAllRecords() {
+            if (confirm("Reset all category PBs?")) {
+                ['JNR_GIRLS', 'JNR_BOYS', 'SNR_GIRLS', 'SNR_BOYS', 'OPEN_AGES'].forEach(cat => localStorage.removeItem('beep_record_' + cat));
+                initRecords();
+            }
+        }
+    </script>
+</body>
+</html>
